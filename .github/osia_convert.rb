@@ -23,7 +23,7 @@ def apps_for_cat(apps, id)
   end
 
   s = f.select do |a|
-    cat = a['category']
+    cat = a['category-ids']
     cat.class == Array ? cat.include?(id) : (cat == id)
   end
   s.sort_by { |k, v| k['title'].downcase }
@@ -32,47 +32,113 @@ end
 def output_apps(apps)
   o = ''
   apps.each do |a|
-      name = a['title']
-      link = a['source']
-      itunes = a['itunes']
-      homepage = a['homepage']
-      desc = a['description']
-      tags = a['tags']
-      stars = a['stars']
-      lang = a['lang']
+    name = a['title']
+    link = a['source']
+    itunes = a['itunes']
+    homepage = a['homepage']
+    desc = a['description']
+    tags = a['tags']
+    stars = a['stars']
+    lang = a['lang']
 
-      o << "- #{name}"
+    date_added = a['date_added']
+    screenshots = a['screenshots']
+    license = a['license']
 
-      if desc.nil?
-        o << ' '
-      else
-        o << ": #{desc} " if desc.size>0
+    t = "#{name}"
+
+    if desc.nil?
+      t << ' '
+    else
+      t << ": #{desc} " if desc.size>0
+    end
+
+    unless itunes.nil?
+      t << "[` App Store`](#{itunes}) "
+    end
+    o << "- #{t} \n"
+
+    o <<  "<details><summary>"
+
+    details = if tags.nil?
+      '`objc` '
+    else
+      ''
+    end
+
+    unless tags.nil?
+      details << '`swift` ' if tags.include? 'swift'
+
+      tags.each do |t|
+        details << "`#{t.downcase}` " if t.downcase!='swift'
       end
+    end
 
-      unless tags.nil?
-        o << "🔶" if tags.include? 'swift'
+    unless lang.nil?
+      details << output_flag(lang)
+      details << ' '
+    end
+
+    unless stars.nil?
+      details << output_stars(stars)
+    end
+    o << details
+
+    o << "</summary>"
+
+    details_list = []
+
+    details_list.push link
+
+    unless homepage.nil?
+      details_list.push homepage
+    end
+
+    unless date_added.nil?
+      date = DateTime.parse(date_added)
+      formatted_date = date.strftime "%B %e, %Y"
+      details_list.push "Added #{formatted_date}"
+    end
+
+    unless license.nil?
+      license_display = license=='other'? "`#{license}`" : "[`#{license}`](http://choosealicense.com/licenses/#{license}/)"
+      details_list.push "License: #{license_display}"
+    end
+
+    details = '  '
+    details << details_list[0]
+    details_list[1..-1].each { |x| details << "<br>  #{x}" }
+
+    unless screenshots.nil?
+      details << "\n<div>"
+      screenshots.each_with_index do |s, i|
+        details << "<img height='300' alt='#{name} image #{i+1}' src='#{screenshots[i]}'> "
       end
+      details << "\n</div>"
+    end
 
-      unless lang.nil?
-        o << output_flag(lang)
-      end
+    details << "\n  </details>\n"
+    o << details
 
-      unless stars.nil?
-        o << output_stars(stars)
-      end
-
-      o << "\n"
-      o << "  - #{link}\n"
-      o << "  - #{homepage}\n" unless homepage.nil?
-      o << "  - #{itunes}\n" unless itunes.nil?
+    o << "</details> \n"
   end
   o
 end
 
+def output_badges(count)
+  date = DateTime.now
+  date_display = date.strftime "%B %e, %Y"
+
+  b = "![](https://img.shields.io/badge/Projects-#{count}-green.svg) [![](https://img.shields.io/badge/Twitter-@opensourceios-blue.svg)](https://twitter.com/opensourceios) ![](https://img.shields.io/badge/Updated-#{date_display}-lightgrey.svg)"
+  b
+end
+
 def output_flag(lang)
   case lang
-  when 'ger'
+  when 'deu'
     '🇩🇪'
+  when 'fra'
+    '🇫🇷'
   when 'jpn'
     '🇯🇵'
   when 'ltz'
@@ -80,9 +146,11 @@ def output_flag(lang)
   when 'nld'
     '🇳🇱'
   when 'por'
-    '🇧🇷'
+    '🇵🇹'
   when 'spa'
     '🇪🇸'
+  when 'rus'
+    '🇷🇺'
   when 'zho'
     '🇨🇳'
   else
@@ -109,22 +177,20 @@ end
 
 def write_readme(j)
   t    = j['title']
+  subt = j['subtitle']
   desc = j['description']
   h    = j['header']
   f    = j['footer']
   cats = j['categories']
   apps = j['projects']
 
-  date = DateTime.now
-  date_display = date.strftime "%B %e, %Y"
-
   output = '# ' + t
   output << "\n\n"
   output << desc
-  output << "\n\nA collaborative list of **#{apps.count}** open-source iOS apps, your [contribution](https://github.com/dkhamsing/open-source-ios-apps/blob/master/.github/CONTRIBUTING.md) is welcome :smile: "
-  output << "(last update *#{date_display}*)."
+  output << "\n\n#{subt}\n\n"
+  output << output_badges(apps.count)
 
-  output << "\n \nJump to \n \n"
+  output << "\n\nJump to\n\n"
 
   cats.each do |c|
     title = c['title']
@@ -134,7 +200,8 @@ def write_readme(j)
     output << temp
   end
 
-  output << "- [Bonus](#bonus) \n"
+  output << "- [Thanks](#thanks)\n"
+  output << "- [Contact](#contact)\n"
 
   output << "\n"
   output << h
@@ -174,7 +241,6 @@ def write_archive(j)
     t = a['title']
     s = a['source']
     output << "- #{t} #{s}\n"
-    # output <<
   end
 
   output << "\n"

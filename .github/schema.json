@@ -6,6 +6,9 @@
 		"title": {
 			"type": "string"
 		},
+		"subtitle": {
+			"type": "string"
+		},
 		"description": {
 			"type": "string"
 		},
@@ -62,10 +65,10 @@
 						"description": "The official title of the project.",
 						"type": "string"
 					},
-					"category": {
+					"category-ids": {
 						"title": "Project Category",
-						"description": "The category or list of categories that the project falls under. If it is a list, the categories should be ordered from most to least relevant/applicable to the project.",
-						"type": ["string", "array"],
+						"description": "The list of categories that the project falls under. If it is a list, the categories should be ordered from most to least relevant/applicable to the project.",
+						"type": ["array"],
 						"items": {
 							"type": "string"
 						}
@@ -137,10 +140,24 @@
 						"description": "A place to put any metadata for a project. The items can be any type.",
 						"type": "array",
 						"default": []
+					},
+					"suggested_by": {
+						"title": "Suggested By",
+						"description": "Name of person who suggested project.",
+						"type": "string"
+					},
+					"date_added": {
+						"title": "Date Added",
+						"description": "Date when project was added.",
+						"type": "string"
+					},
+					"screenshots": {
+						"title": "Screenshots",
+						"description": "Links to screenshot images.",
+						"type": "array"
 					}
-
 				},
-				"required": ["title", "category", "source"],
+				"required": ["title", "category-ids", "source"],
 				"additionalProperties": false
 			}
 		}
